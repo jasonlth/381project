@@ -42,8 +42,26 @@ app.post("/login",function(req,res){
 		res.status(200).render("login",{c:errormass});
 		errormass = "";
 	}else{
-		req.session.userID = req.body.userID;
-		res.redirect('/');
+		MongoClient.connect(mongourl,function(err,db) {
+			try {
+				assert.equal(err,null);
+			} catch (err) {
+				res.writeHead(500,{"Content-Type":"text/plain"});
+				res.end("MongoClient connect() failed!");
+			}
+			var check = {};
+			check['uid'] = req.body.userID;
+			check['password'] = req.body.pw;
+			findUser(db,check,function(temp){
+				if(temp.length==0){
+					errormass = "Incorrect User ID or Password!";
+					res.redirect('/login');
+				}else{
+					req.session.userID = req.body.userID;
+					res.redirect('/');
+				}
+			});
+		});
 	}
 });
 
@@ -59,7 +77,7 @@ app.post("/createUser",function(req,res){
 			res.writeHead(500,{"Content-Type":"text/plain"});
 			res.end("MongoClient connect() failed!");
 		}
-		if(req.body.name==""){
+		if(req.body.userID==""){
 			res.redirect('/createUser');
 		}else if(req.body.pw!=req.body.pw2){
 			res.redirect('/createUser');
@@ -94,8 +112,20 @@ app.get("/home", function(req,res) {
 });
 
 app.get('/createRestaurant', function(req,res) {
-	res.status(200).render("createrestaurant",{c : req.session.userID,e : errormass});
-	errormass = "";
+	MongoClient.connect(mongourl,function(err,db) {
+		try {
+			assert.equal(err,null);
+		} catch (err) {
+			res.writeHead(500,{"Content-Type":"text/plain"});
+			res.end("MongoClient connect() failed!");
+		}
+		var check = {};
+		findRestaurant(db,check,function(temp){
+			var number = temp.length + 1 ;
+			res.status(200).render("createrestaurant",{c : req.session.userID,e : errormass,r : number});
+			errormass = "";
+		});
+	});
 });
 
 app.post('/createRestaurant', function(req,res){
@@ -115,10 +145,12 @@ app.post('/createRestaurant', function(req,res){
 				res.redirect('/createRestaurant');
 			}else{
 				var filename=files.filebit.path;
+				temp['rid'] = fields.rid;
 				temp['name'] = fields.name;
 				temp['borough'] = fields.borough;
 				temp['cuisine'] = fields.cuisine;
 				temp['address'] = {'street':fields.street,'building':fields.building,'zipcode':fields.zipcode,'coord':[fields.lon,fields.lat]};
+				temp['grades'] = []
 				fs.readFile(filename,function(err,data){
 					var img = new Buffer(data).toString('base64');
 					temp['image'] = {'type':files.filebit.type,'bit':img};
@@ -136,18 +168,14 @@ app.post('/createRestaurant', function(req,res){
 
 app.get('/sreachRestaurant',function(req,res){
 	var temp = [];
-	res.status(200).render("sreachRestaurant",{'name':"",'borough':"",'cuisine':"",'street':"",'building':"",'zipcode':"",'lon':"",'lat':"",'restaurant':temp,'user': req.session.userID});
+	res.status(200).render("sreachRestaurant",{'name':"",'borough':"",'cuisine':"",'rid':"",'restaurant':temp,'user': req.session.userID});
 });
 
 app.post('/sreachRestaurant',function(req,res){
+	var rid = req.body.rid;
 	var name = req.body.name;
 	var borough = req.body.borough;
 	var cuisine = req.body.cuisine;
-	var street = req.body.street;
-	var building = req.body.building;
-	var zipcode = req.body.zipcode;
-	var lon = req.body.lon;
-	var lat = req.body.lat;
 	MongoClient.connect(mongourl,function(err,db) {
 		try {
 		  assert.equal(err,null);
@@ -162,9 +190,123 @@ app.post('/sreachRestaurant',function(req,res){
 		if(borough!=""){
 			criteria['borough']=borough;
 		}
+		if(cuisine!=""){
+			criteria['cuisine']=cuisine;
+		}
+		if(rid!=""){
+			criteria['rid'] = rid;
+		}
 		findRestaurant(db,criteria,function(restaurant){
 			db.close();
-			res.status(200).render("sreachRestaurant",{'name':name,'borough':borough,'cuisine':cuisine,'street':street,'building':building,'zipcode':zipcode,'lon':lon,'lat':lat,'restaurant':restaurant,'user': req.session.userID});
+			res.status(200).render("sreachRestaurant",{'rid':rid,'name':name,'borough':borough,'cuisine':cuisine,'restaurant':restaurant,'user': req.session.userID});
+		});
+	});
+});
+
+app.post('/updateRestaurant',function(req,res){
+	MongoClient.connect(mongourl,function(err,db) {
+		try {
+		  assert.equal(err,null);
+		} catch (err) {
+		  res.writeHead(500,{"Content-Type":"text/plain"});
+		  res.end("MongoClient connect() failed!");
+		}
+		var criteria = {};
+		criteria['rid'] = req.body.rid;
+		findRestaurant(db,criteria,function(restaurant){
+			db.close();
+			res.status(200).render("updateRestaurant",{e:errormass,r:restaurant[0],g:JSON.stringify(restaurant[0].grades)});
+		});
+	});
+});
+
+app.post('/update',function(req,res){
+	var temp = {};
+	var form = new formidable.IncomingForm();
+	form.parse(req, function (err, fields, files) {
+		MongoClient.connect(mongourl,function(err,db) {
+			try {
+			  assert.equal(err,null);
+			} catch (err) {
+			  res.writeHead(500,{"Content-Type":"text/plain"});
+			  res.end("MongoClient connect() failed!");
+			}
+			if(fields.name.length==0){
+				errormass = "Restaurant name must have value!";
+				db.close();
+				res.redirect('/home');
+			}else{
+				var check = {};
+				check['rid'] = fields.rid;
+				console.log(JSON.stringify(check));
+				var filename=files.filebit.path;
+				temp['grades'] = JSON.parse(fields.grade);
+				temp['rid'] = fields.rid;
+				temp['name'] = fields.name;
+				temp['borough'] = fields.borough;
+				temp['cuisine'] = fields.cuisine;
+				temp['address'] = {'street':fields.street,'building':fields.building,'zipcode':fields.zipcode,'coord':[fields.lon,fields.lat]};
+				fs.readFile(filename,function(err,data){
+					var img = new Buffer(data).toString('base64');
+					if(img.length ==0){
+						temp['image'] = {'type':fields.type,'bit':fields.bit};
+					}else{
+						temp['image'] = {'type':files.filebit.type,'bit':img};
+					}
+					temp['owner'] = fields.owner;
+					db.collection('restaurant').updateOne(check,temp,function(err,callback){
+						if(err) throw err;
+						console.log("updated");
+						db.close();
+						res.redirect('/home');;	
+					});
+				});
+			}
+		});
+	});
+});
+
+app.post('/deleteRestaurant',function(req,res){
+	MongoClient.connect(mongourl,function(err,db) {
+		try {
+		  assert.equal(err,null);
+		} catch (err) {
+		  res.writeHead(500,{"Content-Type":"text/plain"});
+		  res.end("MongoClient connect() failed!");
+		}
+		var criteria = {};
+		criteria['rid'] = req.body.rid;
+		db.collection('restaurant').deleteOne(criteria,function(err,obj){
+			if(err) throw err;
+			console.log("Deleted");
+			db.close();
+			res.redirect('/home');
+		});
+	});
+});
+
+app.post('/grading',function(req,res){
+	MongoClient.connect(mongourl,function(err,db) {
+		try {
+		  assert.equal(err,null);
+		} catch (err) {
+		  res.writeHead(500,{"Content-Type":"text/plain"});
+		  res.end("MongoClient connect() failed!");
+		}
+		var userID = req.session.userID;
+		var criteria = {};
+		criteria['rid'] = req.body.rid;
+		findRestaurant(db,criteria,function(temp){
+			var temp2 = [];
+			temp2 = temp[0].grades;
+			temp2.push({'user':userID,'score':req.body.grade});
+			temp[0].grades = temp2;
+			db.collection('restaurant').updateOne(criteria,temp[0],function(err,callback){
+				if(err) throw err;
+				db.close();
+				console.log("voted");
+				res.redirect("/home");
+			});
 		});
 	});
 });
@@ -199,6 +341,7 @@ function findUser(db,criteria,callback){
 		if (doc != null) {
 			temp.push(doc);
 		}else{
+			console.log(temp.length);
 		  callback(temp);
 		}
 		});

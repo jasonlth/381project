@@ -2,12 +2,16 @@
   <BODY>
     <H1>Sreach Restaurant</H1>
     <form action="/sreachRestaurant" method="post">
+        Restaurant ID: <input type="text" name = "rid" value = "<%=rid %>"><br>
         Name: <input type="text" name = "name" value = "<%= name %>"><br>
         Borough: <input type="text" name = "borough" value = "<%= borough %>"><br>
         Cuisine:<input type="text" name = "cuisine" value = "<%= cuisine %>"><br>
         <input type="submit" value="Search">
     </form>
     <% restaurant.forEach(function(p){ %>
+    <% if(p.rid!=""){ %>
+        Restaurant ID: <%= p.rid %> <br>
+    <% } %>
     <% if(p.name!=""){ %>
         Name: <%= p.name %><br>
     <% } %>
@@ -28,21 +32,81 @@
         <% if(p.address.zipcode!=""){ %>
             Zipcode: <%= p.address.zipcode %> <br>
         <% } %>
-        <% if(p.address.coord!=""){ %>
-            <a href="#"><%=p.address.coord[0]%><%=p.address.coord[1]%></a><br>
+        <% if(p.address.coord[0]!=""){ %>
+            <a href="https://google.com/maps/?q=<%=p.address.coord[0]%>,<%=p.address.coord[1]%>">Google Map</a><br>
         <% } %>
     <% } %>
     <% if(p.image.bit!="") {%>
-        <img src="data:<%= p.image.type %> ;base64,<%= p.image.bit %>">
+        <img src="data:<%= p.image.type %> ;base64,<%= p.image.bit %>" width = "300" height = "300"><br>
+    <% } %>
+    <% if(p.grades.length!=0){%>
+    <% var gradeUser = 0 %>
+    <% var num = 0 %>
+    <% p.grades.forEach(function(g){%>
+    <% num = num +  parseInt(g.score) %>
+    <% if(g.user == user){ %>
+    <% gradeUser = 1 %>
+    <% } %>
+    <% }) %>
+    <% num = num/parseInt(p.grades.length) %>
+        Score: <%= num %><br>
+    <% if(gradeUser == 0){ %>
+        Grade:
+        <form action="/grading" method="post"> 
+        <% if(p.rid!=""){ %>
+            <input type="hidden" name="rid" value="<%= p.rid %>">
+        <% } %>
+        <select name="grade">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+        </select>
+        <input type="submit" value="vote">
+        </form>
+    <% } %>
+    <% }else{ %>
+        Grade:
+        <form action="/grading" method="post"> 
+        <% if(p.rid!=""){ %>
+            <input type="hidden" name="rid" value="<%= p.rid %>">
+        <% } %>
+        <select name="grade">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+        </select>
+        <input type="submit" value="vote">
+        </form>
     <% } %>
     <% if(p.owner == user){%>
-        <form action="/delectRestaurant" method="post">
-            <input type="submit" value="delect">
+        <form action="/deleteRestaurant" method="post">
+            <% if(p.rid!=""){ %>
+                <input type="hidden" name="rid" value="<%= p.rid %>">
+            <% } %>
+            <input type="submit" value="delete">
         </form>
         <form action="/updateRestaurant" method="post">
+            <% if(p.rid!=""){ %>
+                <input type="hidden" name="rid" value="<%= p.rid %>">
+            <% } %>
             <input type="submit" value="update">
         </form>
     <% } %>
+    <br>
     <% });  %>
     <a href="/home">Back to Home</a>
   </BODY>
