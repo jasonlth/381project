@@ -1,0 +1,49 @@
+<HTML>
+  <BODY>
+    <H1>Sreach Restaurant</H1>
+    <form action="/sreachRestaurant" method="post">
+        Name: <input type="text" name = "name" value = "<%= name %>"><br>
+        Borough: <input type="text" name = "borough" value = "<%= borough %>"><br>
+        Cuisine:<input type="text" name = "cuisine" value = "<%= cuisine %>"><br>
+        <input type="submit" value="Search">
+    </form>
+    <% restaurant.forEach(function(p){ %>
+    <% if(p.name!=""){ %>
+        Name: <%= p.name %><br>
+    <% } %>
+    <% if(p.borough!=""){ %>
+        Borough: <%= p.borough %><br>
+    <% } %>
+    <% if(p.cuisine!=""){ %>
+        Cuisine: <%= p.cuisine %> <br>
+    <% } %>
+    <% if(p.address.street!=""||p.address.building!=""||p.address.zipcode!=""||p.address.coord[0]!=""){ %>
+        Address: <br>
+        <% if(p.address.street!=""){ %>
+            Street: <%= p.address.street %> <br>
+        <% } %>
+        <% if(p.address.building!=""){ %>
+            Building: <%= p.address.building %> <br>
+        <% } %>
+        <% if(p.address.zipcode!=""){ %>
+            Zipcode: <%= p.address.zipcode %> <br>
+        <% } %>
+        <% if(p.address.coord!=""){ %>
+            <a href="#"><%=p.address.coord[0]%><%=p.address.coord[1]%></a><br>
+        <% } %>
+    <% } %>
+    <% if(p.image.bit!="") {%>
+        <img src="data:<%= p.image.type %> ;base64,<%= p.image.bit %>">
+    <% } %>
+    <% if(p.owner == user){%>
+        <form action="/delectRestaurant" method="post">
+            <input type="submit" value="delect">
+        </form>
+        <form action="/updateRestaurant" method="post">
+            <input type="submit" value="update">
+        </form>
+    <% } %>
+    <% });  %>
+    <a href="/home">Back to Home</a>
+  </BODY>
+</HTML>

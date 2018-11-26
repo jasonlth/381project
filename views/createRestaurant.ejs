@@ -1,0 +1,22 @@
+<HTML>
+  <BODY>
+    <H1>Create Restaurant</H1>
+    <%= e %> <br>
+    <form action="/createRestaurant" method="post" enctype="multipart/form-data">
+      Restaurant Name:<input type="text" name="name"><br>
+      Borough:<input type="text" name="borough"><br>
+      Cuisine:<input type="text" name="cuisine"><br>
+      Address:<br>
+      Street:<input type="text" name="street"><br>
+      Building:<input type="text" name="building"><br>
+      Zipcode:<input type="text" name="zipcode"><br>
+      Coord:<br>
+      lon.:<input type="text" name="lon">lat.:<input type="text" name="lat"><br>
+      Photo:<input type="file" name="filebit"><br>
+      <input type="hidden" name="owner" value= "<%= c %>" ><br>
+      <input type="hidden" name="RID" value=""><br>
+      <input type="submit" value="create"><br>
+    </form>
+    <a href="/home">Back to Home</a>
+  </BODY>
+</HTML>
