@@ -311,6 +311,47 @@ app.post('/grading',function(req,res){
 	});
 });
 
+app.get('/api/restaurant/:type/:p',function(req,res){
+	var type = req.params.type;
+	var p = req.params.p;
+	MongoClient.connect(mongourl,function(err,db) {
+		try {
+		  assert.equal(err,null);
+		} catch (err) {
+		  res.writeHead(500,{"Content-Type":"text/plain"});
+		  res.end("MongoClient connect() failed!");
+		}
+		var criteria = {};
+		criteria[type] = p;
+		findRestaurant(db,criteria,function(temp){
+			console.log(JSON.stringify(temp));
+			db.close();
+		});
+	});
+});
+
+app.post('/api/restaurant',function(req,res){
+	var temp = {};
+	if(req.body.name==""){
+		temp['status'] = "failed";
+	}else if(req.body.owner==""){
+		temp['status'] = "failed";
+	}else{
+		MongoClient.connect(mongourl,function(err,db) {
+			try {
+			  assert.equal(err,null);
+			} catch (err) {
+				temp['status'] = "failed";
+			}
+			insertRestaurant(db,req.body,function(result){
+				db.close();
+				temp['status'] = "OK";
+				temp['_id'] = result['_id'];
+			});
+		});		
+	}
+});
+
 function insertRestaurant(db,r,callback) {
 	db.collection('restaurant').insertOne(r,function(err,result) {
 		assert.equal(err,null);
