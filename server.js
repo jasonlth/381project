@@ -298,7 +298,10 @@ app.post('/grading',function(req,res){
 		criteria['rid'] = req.body.rid;
 		findRestaurant(db,criteria,function(temp){
 			var temp2 = [];
-			temp2 = temp[0].grades;
+			console.log(JSON.stringify(temp[0]));
+			if(temp[0].grades!=undefined){
+				temp2 = temp[0].grades;
+			}
 			temp2.push({'user':userID,'score':req.body.grade});
 			temp[0].grades = temp2;
 			db.collection('restaurant').updateOne(criteria,temp[0],function(err,callback){
@@ -324,7 +327,7 @@ app.get('/api/restaurant/:type/:p',function(req,res){
 		var criteria = {};
 		criteria[type] = p;
 		findRestaurant(db,criteria,function(temp){
-			console.log(JSON.stringify(temp));
+			res.json(temp);
 			db.close();
 		});
 	});
@@ -343,10 +346,21 @@ app.post('/api/restaurant',function(req,res){
 			} catch (err) {
 				temp['status'] = "failed";
 			}
-			insertRestaurant(db,req.body,function(result){
-				db.close();
-				temp['status'] = "OK";
-				temp['_id'] = result['_id'];
+			var check = {};
+			var temp2 = {};
+			temp2 = req.body;
+			findRestaurant(db,check,function(temp3){
+				var number = temp3.length + 1 ;
+				temp2['rid'] = ""+number;
+				insertRestaurant(db,temp2,function(result){
+					temp['status'] = "OK";
+					findRestaurant(db,temp2,function(temp4){
+						console.log(JSON.stringify(temp4));
+						temp['_id'] = temp4[0]._id;
+						db.close();
+						res.json(temp);
+					});
+				});
 			});
 		});		
 	}

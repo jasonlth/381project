@@ -15,12 +15,17 @@
     <% if(p.name!=""){ %>
         Name: <%= p.name %><br>
     <% } %>
-    <% if(p.borough!=""){ %>
-        Borough: <%= p.borough %><br>
+    <% if(p.borough!=undefined){ %>
+        <% if(p.borough!=""){ %>
+            Borough: <%= p.borough %><br>
+        <% } %>
     <% } %>
-    <% if(p.cuisine!=""){ %>
-        Cuisine: <%= p.cuisine %> <br>
+    <% if(p.cuisine!=undefined){ %>
+        <% if(p.cuisine!=""){ %>
+            Cuisine: <%= p.cuisine %> <br>
+        <% } %>
     <% } %>
+    <% if(p.address != undefined){ %>
     <% if(p.address.street!=""||p.address.building!=""||p.address.zipcode!=""||p.address.coord[0]!=""){ %>
         Address: <br>
         <% if(p.address.street!=""){ %>
@@ -36,9 +41,13 @@
             <a href="https://google.com/maps/?q=<%=p.address.coord[0]%>,<%=p.address.coord[1]%>">Google Map</a><br>
         <% } %>
     <% } %>
+    <% } %>
+    <% if(p.image!=undefined){ %>
     <% if(p.image.bit!="") {%>
         <img src="data:<%= p.image.type %> ;base64,<%= p.image.bit %>" width = "300" height = "300"><br>
     <% } %>
+    <% } %>
+    <% if(p.grades!=undefined){ %>
     <% if(p.grades.length!=0){%>
     <% var gradeUser = 0 %>
     <% var num = 0 %>
@@ -51,6 +60,27 @@
     <% num = num/parseInt(p.grades.length) %>
         Score: <%= num %><br>
     <% if(gradeUser == 0){ %>
+        Grade:
+        <form action="/grading" method="post"> 
+        <% if(p.rid!=""){ %>
+            <input type="hidden" name="rid" value="<%= p.rid %>">
+        <% } %>
+        <select name="grade">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+        </select>
+        <input type="submit" value="vote">
+        </form>
+    <% } %>
+    <% }else{ %>
         Grade:
         <form action="/grading" method="post"> 
         <% if(p.rid!=""){ %>
