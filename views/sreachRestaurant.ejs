@@ -37,8 +37,10 @@
         <% if(p.address.zipcode!=""){ %>
             Zipcode: <%= p.address.zipcode %> <br>
         <% } %>
+        <% if(p.address.coord!=undefined){ %>
         <% if(p.address.coord[0]!=""){ %>
             <a href="https://google.com/maps/?q=<%=p.address.coord[0]%>,<%=p.address.coord[1]%>">Google Map</a><br>
+        <% } %>
         <% } %>
     <% } %>
     <% } %>

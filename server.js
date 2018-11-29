@@ -130,6 +130,7 @@ app.get('/createRestaurant', function(req,res) {
 
 app.post('/createRestaurant', function(req,res){
 	var temp = {};
+	var tempAdress = {};
 	var form = new formidable.IncomingForm();
 	form.parse(req, function (err, fields, files) {
 		MongoClient.connect(mongourl,function(err,db) {
@@ -147,13 +148,33 @@ app.post('/createRestaurant', function(req,res){
 				var filename=files.filebit.path;
 				temp['rid'] = fields.rid;
 				temp['name'] = fields.name;
-				temp['borough'] = fields.borough;
-				temp['cuisine'] = fields.cuisine;
-				temp['address'] = {'street':fields.street,'building':fields.building,'zipcode':fields.zipcode,'coord':[fields.lon,fields.lat]};
+				if(fields.borough!=""){
+					temp['borough'] = fields.borough;
+				}
+				if(fields.cuisine!=""){
+					temp['cuisine'] = fields.cuisine;
+				}
+				if(fields.street!=""){
+					tempAdress['street']=fields.street;
+				}
+				if(fields.building!=""){
+					tempAdress['building']=fields.building;
+				}
+				if(fields.zipcode!=""){
+					tempAdress['zipcode']=fields.zipcode;
+				}
+				if(fields.lon!=""&&fields.lat!=""){
+					tempAdress['coord']=[fields.lon,fields.lat];
+				}
+				if(Object.keys(tempAdress).length!=0){
+					temp['address'] = tempAdress;
+				}
 				temp['grades'] = []
 				fs.readFile(filename,function(err,data){
 					var img = new Buffer(data).toString('base64');
-					temp['image'] = {'type':files.filebit.type,'bit':img};
+					if(img.length !=0){
+						temp['image'] = {'type':files.filebit.type,'bit':img};
+					}
 					temp['owner'] = fields.owner;
 					insertRestaurant(db,temp,function(result) {
 					  db.close();
@@ -222,6 +243,7 @@ app.post('/updateRestaurant',function(req,res){
 
 app.post('/update',function(req,res){
 	var temp = {};
+	var tempAdress = {};
 	var form = new formidable.IncomingForm();
 	form.parse(req, function (err, fields, files) {
 		MongoClient.connect(mongourl,function(err,db) {
@@ -238,20 +260,37 @@ app.post('/update',function(req,res){
 			}else{
 				var check = {};
 				check['rid'] = fields.rid;
-				console.log(JSON.stringify(check));
 				var filename=files.filebit.path;
 				temp['grades'] = JSON.parse(fields.grade);
-				temp['rid'] = fields.rid;
 				temp['name'] = fields.name;
-				temp['borough'] = fields.borough;
-				temp['cuisine'] = fields.cuisine;
-				temp['address'] = {'street':fields.street,'building':fields.building,'zipcode':fields.zipcode,'coord':[fields.lon,fields.lat]};
+				temp['rid'] = fields.rid;
+				if(fields.borough!=""){
+					temp['borough'] = fields.borough;
+				}
+				if(fields.cuisine!=""){
+					temp['cuisine'] = fields.cuisine;
+				}
+				if(fields.street!=""){
+					tempAdress['street']=fields.street;
+				}
+				if(fields.building!=""){
+					tempAdress['building']=fields.building;
+				}
+				if(fields.zipcode!=""){
+					tempAdress['zipcode']=fields.zipcode;
+				}
+				if(fields.lon!=""&&fields.lat!=""){
+					tempAdress['coord']=[fields.lon,fields.lat];
+				}
+				if(Object.keys(tempAdress).length!=0){
+					temp['address'] = tempAdress;
+				}
 				fs.readFile(filename,function(err,data){
 					var img = new Buffer(data).toString('base64');
-					if(img.length ==0){
-						temp['image'] = {'type':fields.type,'bit':fields.bit};
-					}else{
+					if(img.length !=0){
 						temp['image'] = {'type':files.filebit.type,'bit':img};
+					}else if(fields.bit!=""){
+						temp['image'] = {'type':fields.type,'bit':fields.bit};
 					}
 					temp['owner'] = fields.owner;
 					db.collection('restaurant').updateOne(check,temp,function(err,callback){
