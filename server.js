@@ -122,7 +122,7 @@ app.get('/createRestaurant', function(req,res) {
 		var check = {};
 		findRestaurant(db,check,function(temp){
 			var number = temp.length + 1 ;
-			res.status(200).render("createrestaurant",{c : req.session.userID,e : errormass,r : number});
+			res.status(200).render("createRestaurant",{c : req.session.userID,e : errormass,r : number});
 			errormass = "";
 		});
 	});
