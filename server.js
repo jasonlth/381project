@@ -374,10 +374,12 @@ app.get('/api/restaurant/:type/:p',function(req,res){
 
 app.post('/api/restaurant',function(req,res){
 	var temp = {};
-	if(req.body.name==""){
+	if(req.body.name==""||req.body.name==undefined){
 		temp['status'] = "failed";
-	}else if(req.body.owner==""){
+		res.json(temp);
+	}else if(req.body.owner==""||req.body.owner==undefined){
 		temp['status'] = "failed";
+		res.json(temp);
 	}else{
 		MongoClient.connect(mongourl,function(err,db) {
 			try {
